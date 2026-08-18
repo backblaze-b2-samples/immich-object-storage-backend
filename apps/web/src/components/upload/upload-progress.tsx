@@ -7,6 +7,7 @@ import {
   ChevronDown,
   FileIcon,
   FolderOpen,
+  Images,
   Loader2,
   RotateCcw,
   XCircle,
@@ -169,7 +170,19 @@ function UploadRow({
                 </CollapsibleTrigger>
               )}
               {/* A finished upload used to dead-end here — no way through to the
-                  file it just created. */}
+                  photo it just created. The Library is the goal surface, so it
+                  leads; Files stays as a secondary path to the raw bucket. */}
+              <Button
+                asChild
+                className="h-7 gap-1 px-2 text-xs"
+                size="sm"
+                variant="ghost"
+              >
+                <Link href="/library">
+                  <Images className="h-3.5 w-3.5" aria-hidden="true" />
+                  View in Library
+                </Link>
+              </Button>
               <Button
                 asChild
                 className="h-7 gap-1 px-2 text-xs"

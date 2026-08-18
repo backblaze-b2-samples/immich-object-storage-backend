@@ -43,6 +43,19 @@ Low-severity polish, left for a follow-up; none blocks the core flow.
 - 404 route — the breadcrumb title-cases the unknown slug (e.g. "This Route Does Not Exist"), presenting a nonexistent route as a real page name; the rest of the 404 is solid
 - `/design` — the "Go to Upload" button inside the Patterns empty-state demo does not navigate; it is presumably a static sample, but it looks live on a linked primary surface
 
+## 2026-08-18 — verify
+
+Nitpicks surfaced by the 3-lens `/sample-3-verify` UX funnel (goal: add a photo →
+B2 fan-out → Library detail → CLIP semantic search). None block the core flow; the
+one friction found this run (the completed upload row led only to `/files`, not to
+the Library goal surface) was fixed — a primary "View in Library" link now leads,
+with "View in Files" kept as secondary — so it is not listed here.
+
+- `/` dashboard (first-run) — "Total on B2" and "Storage by prefix → library/ (originals)" count raw bucket bytes that aren't tracked as assets, so with an empty library the dashboard can read e.g. "26 MB on B2" / "library/ 26 MB" while the Library shows "Your library is empty" / "0 photos". Reconcile the storage/prefix figures with the asset count (or scope the storage read to tracked assets) so the first-run picture agrees. (Lens A)
+- `/upload` (server-side fan-out) — the whole multi-second derivative + ML phase (thumbnails + EXIF + CLIP embedding + smart tags) shows only "Verifying upload…" with an indeterminate bar, so the user can't tell embedding/tagging is running. A spinner, a moving bar, and a label are all present (not blocking); relabel the phase so it names the fan-out rather than just "verifying". (Lens B)
+- `/upload` completed row — the "View details" extracted-metadata panel does not render because the upload response carries no `metadata` (`FileMetadataDetail` is null on the completed item), so the disclosure never appears. The full metadata is available in the Library asset detail, so this is a nice-to-have: either populate the upload response's metadata or drop the disclosure on the row. (Lens C)
+- `/` dashboard — "Write amplification" reads ~1.04× because the JPEG originals (~27 MB) dwarf the webp thumbnails + JSON sidecars (~1.2 MB); an honest figure, but a weak "write-amplification" story for a sample whose Purpose highlights it. Consider a larger/RAW sample original or additional derivatives so the ratio lands. (Lens C)
+
 ## Resolved
 
 | Description | Resolution |
