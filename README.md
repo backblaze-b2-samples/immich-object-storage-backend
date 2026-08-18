@@ -17,6 +17,28 @@ You add a photo; the app writes the **original** to B2 and then fans it out into
 
 > **Deploy your own in one click** → [Deploy to Vercel](#deploying-to-vercel). One project, one origin, no CORS to wire up.
 
+## What it looks like
+
+**Dashboard** — photo count, total bytes on B2, the write-amplification ratio, a storage-by-prefix breakdown, and CLIP ML status.
+
+![Dashboard with photo count, write-amplification ratio, storage-by-prefix breakdown and ML status](docs/images/dashboard.png)
+
+**Library** — the `library/`-scoped photo gallery, every card marked "AI tagged", with favorites flagged.
+
+![Library gallery of photos scoped to the library/ prefix](docs/images/library.png)
+
+**Asset detail** — an opened photo showing its original, CLIP smart tags with scores, EXIF, an editable description and tags, and the ViT-B-32/openai embedding — all living on B2 under the asset's prefixes.
+
+![Asset detail dialog with original, smart tags, EXIF, description and embedding](docs/images/asset-detail.png)
+
+**Semantic search** — a natural-language query ("beach at sunset") embedded with the same on-device CLIP model and cosine-ranked against the embeddings stored in B2, with a similarity score on each result.
+
+![Semantic search results ranked by CLIP similarity score](docs/images/search.png)
+
+**Upload** — drag-and-drop ingest that sends each original straight to B2, then fans it out into thumbnails, an EXIF sidecar, a CLIP embedding, and smart tags.
+
+![Upload page with a drag-and-drop dropzone for photos](docs/images/upload.png)
+
 ## Quick Start
 
 You need: Node.js >= 20, pnpm >= 9, Python >= 3.12, and a free **[Backblaze B2 account](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-immich-object-storage-backend)**.
