@@ -1,27 +1,28 @@
-"""Unit tests for upload object-key minting.
+"""Unit tests for library object-key minting.
 
-The API mints the object key from the declared filename at presign time; the
-browser never chooses where its bytes land. B2 buckets are always versioned, so
-re-uploading the same name just creates a new version — there is no duplicate
-rejection.
+The API mints an opaque `library/<user>/<YYYY>/<MM>/<asset_id>.<ext>` key at
+presign time — the browser never chooses where its bytes land, and the user's
+real filename is preserved in the sidecar, not the key. Each upload gets a
+fresh asset id, so B2 versioning is never relied on for de-dup.
 """
 
-from app.service.upload import _validate_declared
+from app.service.upload import asset_id_from_key, mint_asset_key
 
 
-def test_key_uses_original_filename():
-    key = _validate_declared("report.txt", "text/plain", 5)
-    assert key == "uploads/report.txt"
+def test_mint_key_is_opaque_and_prefixed():
+    asset_id, key = mint_asset_key("image/jpeg")
+    assert key.startswith("library/demo/")
+    assert key.endswith(f"{asset_id}.jpg")
 
 
-def test_duplicate_filename_yields_same_key():
-    # No dedup: two uploads of the same name resolve to the same key, and B2
-    # versioning keeps both. Minting is deterministic, so the keys match.
-    first = _validate_declared("report.txt", "text/plain", 5)
-    second = _validate_declared("report.txt", "text/plain", 9)
-    assert first == second == "uploads/report.txt"
+def test_each_upload_gets_a_fresh_asset_id():
+    first_id, first_key = mint_asset_key("image/png")
+    second_id, second_key = mint_asset_key("image/png")
+    assert first_id != second_id
+    assert first_key != second_key
 
 
-def test_key_is_sanitised():
-    key = _validate_declared("../../etc/my report.txt", "text/plain", 5)
-    assert key == "uploads/my_report.txt"
+def test_asset_id_roundtrips_from_key():
+    asset_id, key = mint_asset_key("video/mp4")
+    assert asset_id_from_key(key) == asset_id
+    assert key.endswith(".mp4")

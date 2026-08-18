@@ -63,8 +63,8 @@ Set values in the Vercel Project and environment. Never put values in
 
 | Variable names | Classification | Notes |
 | --- | --- | --- |
-| `B2_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Restrict the B2 key to the intended bucket and least privilege. |
-| `B2_ENDPOINT`, `B2_BUCKET_NAME`, `B2_PUBLIC_URL`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate settings | Non-secret configuration | Set `ENABLE_DOCS=false` in production. |
+| `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Restrict the B2 key to the intended bucket and least privilege. |
+| `B2_REGION`, `B2_BUCKET_NAME`, `B2_PUBLIC_URL_BASE`, `ML_DEVICE`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate settings | Non-secret configuration | Set `ENABLE_DOCS=false` in production. The S3 endpoint is derived from `B2_REGION`. The optional CLIP layer does not run on Vercel serverless. |
 | `MAX_FILE_SIZE` | Optional configuration | Uploads go directly to B2 (presigned PUT), so Vercel's 4.5 MB Function limit no longer applies — leave at the 100 MB default or set your own cap. |
 | `WARM_LIST_CACHE_ON_STARTUP=false` | Recommended Vercel configuration | Avoid an expensive full B2 scan on each cold start. |
 | `DOWNLOAD_COUNT_FILE=/tmp/download_count.json` | Optional ephemeral configuration | Lets a warm Function instance write the counter, but it is not durable or shared. |
@@ -115,14 +115,14 @@ repo-root `vercel.json` and creates one Services project:
 
 | `root-directory` | Pre-filled `env` |
 | --- | --- |
-| _(none — repo root)_ | `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_ENDPOINT`, `B2_BUCKET_NAME` |
+| _(none — repo root)_ | `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET_NAME`, `B2_REGION` |
 
 Alongside `repository-url` and the `env` list, the button carries the
 presentation parameters Vercel's clone flow renders in its preview card:
-`project-name` and `repository-name` (both `vibe-coding-starter-kit`, so the
+`project-name` and `repository-name` (both `immich-object-storage-backend`, so the
 cloned repo and the Vercel Project get a readable default name), plus
-`demo-title`, `demo-description`, and `demo-image` — the last pointing at the
-dashboard screenshot in `docs/images/`. There is no `demo-url`: this repository
+`demo-title` and `demo-description`. There is no `demo-image` (the sample ships
+no committed screenshots) and no `demo-url`: this repository
 hosts no public demo deployment, and the API is unauthenticated and bucket-wide
 (see [Variables and Public Exposure](#variables-and-public-exposure)), so a
 casually exposed demo origin is a liability rather than a feature. Any future

@@ -138,6 +138,23 @@ If a fresh clone fails dependency installation, first confirm that
 `services/api/requirements.lock` is present and rerun `pnpm run setup`; do not
 run an unconstrained install from `requirements.txt` as a recovery shortcut.
 
+### Optional ML layer (not in the core lock)
+
+The on-device CLIP layer (`services/api/requirements-ml.txt`: `torch`,
+`open-clip-torch`, `numpy`) is **deliberately excluded** from
+`requirements.txt` / `requirements.lock`, so `pnpm run setup`, `pnpm verify`,
+and `test_dependency_lock` never install or require a ~300 MB torch tree — they
+stay green with the ML layer absent. This mirrors Immich's separate, optional ML
+container.
+
+- torch and `open_clip` are lazy-imported inside functions in
+  `app/repo/ml_clip.py`, so `pytest` and module import succeed without them.
+- The ML-path tests (`test_ingest.py`, `test_search.py`) stub the CLIP adapter,
+  so they exercise the fan-out and ranking logic without a real model.
+- To run the real engine locally: `services/api/.venv/bin/pip install -r
+  services/api/requirements-ml.txt` (first run downloads the ViT-B-32 weights,
+  ~340 MB). Do not add these to the core lock.
+
 ## Agent-docs check
 
 `pnpm check:agent-docs` validates the canonical `AGENTS.md` surface, including

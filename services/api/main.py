@@ -23,7 +23,15 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from starlette.middleware.base import BaseHTTPMiddleware  # noqa: E402
 
 from app.config import settings  # noqa: E402
-from app.runtime import files, health, metrics, ratelimit, upload  # noqa: E402
+from app.runtime import (  # noqa: E402
+    assets,
+    files,
+    health,
+    metrics,
+    ratelimit,
+    search,
+    upload,
+)
 from app.service.files import warm_listing_cache  # noqa: E402
 
 # --- Startup validation ---
@@ -34,20 +42,20 @@ from app.service.files import warm_listing_cache  # noqa: E402
 # line, so misconfiguration is obvious within seconds rather than turning
 # into mysterious 500s on the first request.
 REQUIRED_B2_SETTINGS = (
-    ("b2_key_id", "B2_KEY_ID"),
+    ("b2_application_key_id", "B2_APPLICATION_KEY_ID"),
     ("b2_application_key", "B2_APPLICATION_KEY"),
     ("b2_bucket_name", "B2_BUCKET_NAME"),
-    ("b2_endpoint", "B2_ENDPOINT"),
+    ("b2_region", "B2_REGION"),
 )
 
 # Exact placeholder strings shipped in .env.example. If a user copied
 # the example and didn't edit it, Settings will pass the "non-empty"
 # check above but every B2 call will still 403. Catch that here.
 PLACEHOLDER_VALUES = frozenset({
-    "your_b2_endpoint",
     "your_key_id",
     "your_application_key",
     "your-bucket-name",
+    "your_region",
 })
 
 
@@ -115,11 +123,12 @@ logger = logging.getLogger("api")
 
 # --- App setup ---
 
-API_TITLE = "Vibe Coding Starter Kit API"
+API_TITLE = "Immich B2 Backend API"
 API_DESCRIPTION = (
-    "Local API for the Vibe Coding Starter Kit template, providing file upload "
-    "and management backed by Backblaze B2. This contract documents the "
-    "template's local API, not a hosted public endpoint."
+    "Local API for the Immich B2 Backend sample, a self-hosted photo library "
+    "whose originals, thumbnails, CLIP embeddings, smart tags, and EXIF "
+    "sidecars all live on Backblaze B2. This contract documents the sample's "
+    "local API, not a hosted public endpoint."
 )
 API_VERSION = "0.1.0"
 
@@ -174,4 +183,6 @@ app.add_middleware(
 app.include_router(health.router, tags=["health"])
 app.include_router(upload.router, tags=["upload"])
 app.include_router(files.router, tags=["files"])
+app.include_router(assets.router, tags=["assets"])
+app.include_router(search.router, tags=["search"])
 app.include_router(metrics.router, tags=["metrics"])

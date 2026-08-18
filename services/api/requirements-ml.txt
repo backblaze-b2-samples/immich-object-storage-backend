@@ -1,0 +1,21 @@
+# Optional on-device CLIP layer — semantic search + zero-shot smart tags.
+#
+# Real engine, not a stub: OpenCLIP (open-clip-torch), model ViT-B-32 / openai —
+# exactly the library and default model Immich's machine-learning service ships.
+#
+# This is deliberately SEPARATE from the locked core (requirements.txt /
+# requirements.lock), mirroring Immich's optional `immich-machine-learning`
+# container. The core B2 pipeline (ingest -> thumbnails -> EXIF -> serve ->
+# browse) always works without it; `pnpm verify` and test_dependency_lock stay
+# green without a ~300 MB torch install. Install explicitly to enable ML:
+#
+#     services/api/.venv/bin/pip install -r services/api/requirements-ml.txt
+#
+# First run downloads the ViT-B-32/openai weights (~340 MB). CPU by default;
+# CUDA/MPS auto-detected (ML_DEVICE overrides). See app/repo/ml_clip.py.
+#
+# torchvision is pulled in transitively by open-clip-torch at a version
+# compatible with the resolved torch.
+torch>=2.2,<2.9
+open-clip-torch>=2.24,<3
+numpy<2

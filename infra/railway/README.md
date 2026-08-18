@@ -57,8 +57,8 @@ them in a config file, commit, issue, PR, terminal transcript, or screenshot.
 
 | Service | Variable names | Classification | Notes |
 | --- | --- | --- | --- |
-| API | `B2_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Limit the B2 key to the app bucket and least privilege. |
-| API | `B2_ENDPOINT`, `B2_BUCKET_NAME`, `B2_PUBLIC_URL`, `API_CORS_ORIGINS`, `API_CORS_ORIGIN_REGEX`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate and size settings | Non-secret service configuration | Keep values in Railway, not source; set exact production CORS origins and `ENABLE_DOCS=false`. |
+| API | `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Limit the B2 key to the app bucket and least privilege. |
+| API | `B2_REGION`, `B2_BUCKET_NAME`, `B2_PUBLIC_URL_BASE`, `ML_DEVICE`, `API_CORS_ORIGINS`, `API_CORS_ORIGIN_REGEX`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate and size settings | Non-secret service configuration | Keep values in Railway, not source; set exact production CORS origins and `ENABLE_DOCS=false`. The S3 endpoint is derived from `B2_REGION`. |
 | Web | `NEXT_PUBLIC_API_URL` | Public build-time configuration | Next.js embeds it in browser output; it must be the deployed API origin and contains no credential. |
 
 The browser needs a public API origin, so both services require a deliberate

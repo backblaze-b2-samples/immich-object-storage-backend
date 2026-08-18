@@ -8,6 +8,8 @@ import {
   Settings,
   Sparkles,
   FileIcon,
+  Images,
+  Search,
   Moon,
   Sun,
 } from "lucide-react";
@@ -37,6 +39,8 @@ interface CommandPaletteProps {
 
 const routes = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Library", href: "/library", icon: Images },
+  { label: "Search", href: "/search", icon: Search },
   { label: "Upload", href: "/upload", icon: Upload },
   { label: "Files", href: "/files", icon: FolderOpen },
   { label: "Settings", href: "/settings", icon: Settings },

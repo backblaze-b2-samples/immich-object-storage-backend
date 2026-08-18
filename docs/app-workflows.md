@@ -3,43 +3,51 @@
 
 User journeys inside the application.
 
-## Upload Files
+## Add Photos (create)
 
 - User navigates to `/upload`
-- Drops or selects files in the dropzone
-- Client validates file size (max 100MB) and type
-- Files upload **directly from the browser to B2** (a presigned PUT). A determinate progress bar tracks the bytes leaving the browser; once they are all sent the row switches to "Verifying upload..." with an *indeterminate* sweeping bar while the API HEADs and magic-byte-sniffs the stored object. That phase has no percentage to report, and a bar parked at a full 100% read as finished-but-stuck
-- On success: toast notification, green checkmark, and a "View in Files" link through to the browser
+- Drops or selects photos/videos in the dropzone (JPEG/PNG/GIF/WEBP, MP4/MOV/WEBM, max 100MB)
+- Each original uploads **directly from the browser to B2** (a presigned PUT). A determinate bar tracks the bytes leaving the browser; once sent, the row switches to an indeterminate "Verifying upload…" phase while the API verifies the object **and runs the ingest fan-out** (thumbnails + EXIF sidecar + optional CLIP embedding/tags)
+- On success: toast + green checkmark; the photo now appears under **Library**
 - On failure: red status icon with error message
-- User can clear completed uploads
-- The queue lives in an app-wide provider: navigating to another page keeps the upload running, shows an "Uploading N files" indicator in the header, and keeps the duplicate-upload guard armed
-- Reloading or closing mid-upload asks for confirmation first; if the upload dies anyway, the next load says which file didn't finish
-- See: [File Upload](features/file-upload.md)
+- The queue lives in an app-wide provider (survives navigation); reload mid-upload asks for confirmation
+- See: [Photo Ingest](features/file-upload.md), [ML Pipeline](features/ml-pipeline.md)
 
-## Browse and Manage Files
+## Browse and Manage the Library (read / edit / run / delete)
 
-- User navigates to `/files`
-- Page loads the 100 most recent objects from the API (sorted most recent first). While it loads, the page says so on screen and escalates the wording if the wait runs long — a full bucket listing measured 2.8s-21s cold
-- If that limit was hit, a notice states how many objects the bucket actually holds — the page never claims to show everything
-- Files displayed in tree view with folders and type-specific icons
-- Folders auto-expand on load until the *majority* of the listed files are reachable without clicking, so the page's own "click a file" instruction is always actionable. Stopping at the first visible file was not enough: one stray top-level object left the other 99 sealed in collapsed folders while the page claimed to show 100
-- Clicking a file row opens its preview; the per-row actions menu (preview / download / delete) is always visible, on every viewport
-- Arriving at `/files?preview=<key>` expands that file's folders and opens its preview directly. This is how the ⌘K palette and the dashboard's recent-uploads rows hand off a *specific* file; the param is consumed on arrival so it doesn't re-fire later
-- **Preview**: opens dialog with image/PDF preview + metadata panel, and the file's Download / Delete actions — the advertised "click a file" path offers everything the row menu does. The loading state holds until the media paints; a failure offers "Open in a new tab". The preview URL is signed with `Content-Disposition: inline` so PDFs render in place
-- **Download**: shows a pending state on the row plus a toast while the presigned URL is fetched, then starts the download via an anchor click (which, unlike a popup, still works if the click's user activation expired during a slow presign). Failures are reported; the click can never silently do nothing
-- **Delete**: the confirmation dialog stays open showing "Deleting..." until the request settles, then the row disappears with the toast (optimistic cache update) and the list reconciles with the server. The dialog is held deliberately — Radix closes on action click by default, which dismissed the only pending state and left the row looking untouched while the delete was still in flight
-- Empty bucket shows "No files found" with upload prompt
+- User navigates to `/library` — a thumbnail grid of the app's own photos (the `library/` prefix), reconstructed from the sidecars
+- Clicking a photo opens the asset-detail dialog: the presigned original, dimensions/size, EXIF, ML status, embedding model, and smart-tag badges
+- **Edit**: change description (textarea), favorite (switch), and your own tags (comma-separated free text) → Save rewrites the sidecar on B2
+- **Re-run ML**: regenerates thumbnails + embedding + smart tags, preserving your edits
+- **Delete**: a confirm dialog, then a cascade delete of the original and every derivative from B2
+- Empty state: "Your library is empty" with an Add-photos CTA
+- See: [Photo Library](features/photo-library.md)
+
+## Semantic Search
+
+- User navigates to `/search` and types a description ("beach at sunset"), or clicks an example chip
+- The query is embedded with the same CLIP model that indexed each photo, then cosine-ranked against the embeddings stored in B2; matches render as a scored thumbnail grid, each opening the same asset-detail dialog
+- If the optional ML layer isn't installed (or no embeddings exist yet), an informational alert explains how to enable it — the search never errors
+- See: [Semantic Search](features/semantic-search.md)
+
+## Browse the Full Bucket
+
+- User navigates to `/files` — the retained full-bucket explorer that browses **every** prefix (`library/ thumbs/ ml/ sidecar/`), not just the library
+- Tree view with preview, download, and delete per object; a per-row actions menu on every viewport
 - See: [File Browser](features/file-browser.md)
+
+The full-bucket explorer keeps all of the starter's behaviors (tree view,
+`?preview=<key>` deep links from ⌘K, inline preview, download, and a held
+"Deleting…" confirm dialog); see [File Browser](features/file-browser.md).
 
 ## View Dashboard
 
 - User navigates to `/` (home)
-- Three parallel API calls load: stats, recent files, upload activity — all served from one shared bucket listing that the API warms at startup
-- While stats load, the page states it in words above the cards rather than showing silent skeletons
-- Stats cards show: total files, storage used, uploads today, total downloads
-- Upload chart shows last 7 days of upload activity as bar chart
-- Recent uploads table shows last 10 files with filename, size, type, date. Each filename links to that file's preview on `/files` — `/files` teaches "click a file to preview it", so the same gesture here has to answer rather than being inert text
-- Empty state: "No files uploaded yet" messages
+- One API call loads `GET /assets/stats`
+- Stat cards show: photos, total on B2, write-amplification ratio, favorites
+- A storage-by-prefix bar chart shows how the total splits across `library/`, `thumbs/`, `ml/`, and `sidecar/` — making the write-amplification story concrete
+- An ML-status breakdown counts assets by `done` / `pending` / `failed` / `unavailable`
+- Empty state: zeros and a `0×` amplification, no crash
 - See: [Dashboard](features/dashboard.md)
 
 ## Change Preferences

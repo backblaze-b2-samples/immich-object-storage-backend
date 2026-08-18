@@ -42,9 +42,15 @@ async def presign_upload(req: PresignUploadRequest):
 
 @router.post("/upload/verify", response_model=FileUploadResponse)
 async def verify_upload_route(req: VerifyUploadRequest):
-    """Confirm an object just uploaded directly to B2 is valid and visible."""
+    """Confirm an object just uploaded directly to B2 is valid, then ingest it.
+
+    Verification (HEAD + signature sniff) and the ingest fan-out (thumbnails,
+    EXIF sidecar, optional CLIP) are blocking, so they run in the threadpool.
+    """
     try:
-        result = await run_in_threadpool(verify_upload, req.key)
+        result = await run_in_threadpool(
+            verify_upload, req.key, req.original_filename
+        )
     except UploadError as e:
         logger.warning("Upload verification rejected: %s", e.detail)
         record_upload(success=False)

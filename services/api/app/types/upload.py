@@ -28,9 +28,13 @@ class PresignUploadResponse(BaseModel):
     """A short-lived presigned PUT the browser uploads to, plus the exact
     headers it must send. `Content-Length` and `content-type` are signed into
     the URL, so B2 rejects a body of any other size or type.
+
+    `key` is a minted `library/<user>/<YYYY>/<MM>/<asset_id>.<ext>` path;
+    `asset_id` is the stable id every derivative and the sidecar share.
     """
 
     key: str
+    asset_id: str
     url: str
     method: str
     content_type: str
@@ -39,6 +43,11 @@ class PresignUploadResponse(BaseModel):
 
 
 class VerifyUploadRequest(BaseModel):
-    """Sent after the direct PUT so the API can inspect the stored object."""
+    """Sent after the direct PUT so the API can inspect the stored object.
+
+    `original_filename` is the name the user picked (the minted key is opaque),
+    preserved in the sidecar for display.
+    """
 
     key: str
+    original_filename: str | None = None

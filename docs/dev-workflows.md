@@ -25,7 +25,7 @@ and the release process. Two companion docs carry the reference material:
 - Frontend typecheck: `pnpm typecheck`
 - Frontend lint: `pnpm lint`
 - Backend lint: `pnpm lint:api`
-- E2E: `pnpm test:e2e` (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first)
+- E2E: `pnpm test:e2e` (run `pnpm --filter @immich-object-storage-backend/web exec playwright install chromium` once first)
 
 What each gate checks, its prerequisites, and how to recover when one fails:
 [verification.md](verification.md).

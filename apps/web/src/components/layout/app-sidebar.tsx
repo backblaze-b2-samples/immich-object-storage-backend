@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Upload, FolderOpen, Settings, Sparkles } from "lucide-react";
+import {
+  LayoutDashboard,
+  Upload,
+  FolderOpen,
+  Settings,
+  Sparkles,
+  Images,
+  Search,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -19,6 +27,8 @@ import { APP_NAME } from "@/lib/app-config";
 
 const navItems = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
+  { title: "Library", href: "/library", icon: Images },
+  { title: "Search", href: "/search", icon: Search },
   { title: "Upload", href: "/upload", icon: Upload },
   { title: "Files", href: "/files", icon: FolderOpen },
   { title: "Settings", href: "/settings", icon: Settings },
@@ -108,7 +118,7 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-sidebar-border px-4 py-3">
         <a
-          href="https://www.backblaze.com/cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start"
+          href="https://www.backblaze.com/cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-immich-object-storage-backend"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"

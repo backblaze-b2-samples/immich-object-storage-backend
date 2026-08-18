@@ -45,15 +45,16 @@ export function Dropzone({
   });
 
   const active = isDragActive && !disabled;
-  let title = "Drag & drop files here, or click to browse";
-  let description = "Max file size: 100 MB per file";
+  let title = "Drag & drop photos here, or click to browse";
+  let description =
+    "JPEG / PNG / GIF / WEBP or MP4 / MOV / WEBM, up to 100 MB each. Try a landscape photo to see semantic search light up.";
 
   if (disabled) {
     title = "Uploads in progress";
-    description = "New files can be added when the current queue finishes.";
+    description = "New photos can be added when the current queue finishes.";
   } else if (active) {
-    title = "Drop files here";
-    description = "Release to add files to the upload queue.";
+    title = "Drop photos here";
+    description = "Release to add them to the upload queue.";
   }
 
   let stateClasses = "border-border hover:border-primary/60 hover:bg-muted/60";

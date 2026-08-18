@@ -1,6 +1,9 @@
 # Presigned Direct-to-B2 Upload
 
-Closes [#52](https://github.com/backblaze-b2-samples/vibe-coding-starter-kit/issues/52).
+Inherited from the vibe-coding-starter-kit foundation this sample is built on;
+the presigned direct-to-B2 upload path is shipped. In this sample the minted key
+is a `library/<user>/<YYYY>/<MM>/<asset_id>.<ext>` path and verify additionally
+runs the ingest fan-out (see [ML Pipeline](../../features/ml-pipeline.md)).
 
 ## Goal
 
@@ -53,7 +56,7 @@ validation unconditional — upload to a `pending/<token>/` prefix, promote to
 `uploads/` only after verify, exclude `pending/` from listings, and add a B2
 lifecycle rule to reap abandoned pending objects. It is **off by default** to
 keep the flow simple and is the recommended hardening for anyone exposing a
-public bucket URL (`B2_PUBLIC_URL`).
+public bucket URL (`B2_PUBLIC_URL_BASE`).
 
 ### Metadata at upload
 

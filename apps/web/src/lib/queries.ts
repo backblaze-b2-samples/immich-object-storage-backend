@@ -8,19 +8,30 @@ import {
 } from "@tanstack/react-query";
 import {
   ApiError,
+  deleteAsset,
   deleteFile,
+  getAsset,
+  getAssetOriginalUrl,
+  getAssets,
+  getAssetThumbnailUrl,
   getDownloadUrl,
   getFileDetail,
   getFiles,
   getFileStats,
   getHealth,
+  getLibraryStats,
   getPreviewUrl,
   getUploadActivity,
+  rerunAssetMl,
+  searchAssets,
+  updateAsset,
 } from "@/lib/api-client";
 import type {
+  AssetSummary,
+  AssetUpdate,
   FileMetadata,
   FileMetadataDetail,
-} from "@vibe-coding-starter-kit/shared";
+} from "@immich-object-storage-backend/shared";
 
 // Single source of truth for query keys. Keep these tightly scoped so that
 // invalidating "files" doesn't blow away unrelated caches, and so an IDE
@@ -35,6 +46,15 @@ export const qk = {
   preview: (key: string) => [...qk.all, "preview", key] as const,
   detail: (key: string) => [...qk.all, "detail", key] as const,
   health: () => [...qk.all, "health"] as const,
+  // Photo library (Asset entity)
+  assets: () => [...qk.all, "assets"] as const,
+  asset: (assetId: string) => [...qk.all, "asset", assetId] as const,
+  libraryStats: () => [...qk.all, "library-stats"] as const,
+  assetOriginal: (assetId: string) =>
+    [...qk.all, "asset-original", assetId] as const,
+  assetThumb: (assetId: string, variant: string) =>
+    [...qk.all, "asset-thumb", assetId, variant] as const,
+  search: (query: string) => [...qk.all, "search", query] as const,
 };
 
 export type Health = Awaited<ReturnType<typeof getHealth>>;
@@ -166,6 +186,102 @@ export function useDeleteFile() {
       // activity) against the server in the background.
       dropDeletedFileFromCache(qc, fileKey);
       qc.invalidateQueries({ queryKey: qk.all });
+    },
+  });
+}
+
+// --- Photo library (Asset) --------------------------------------------------
+
+/** Every asset in the library (scoped `/library` gallery + dashboard). */
+export function useAssets({ enabled = true }: QueryGate = {}) {
+  return useQuery<AssetSummary[], ApiError>({
+    queryKey: qk.assets(),
+    queryFn: getAssets,
+    enabled,
+  });
+}
+
+export function useAsset(assetId: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: qk.asset(assetId ?? ""),
+    queryFn: () => getAsset(assetId as string),
+    enabled: enabled && !!assetId,
+  });
+}
+
+export function useLibraryStats({ enabled = true }: QueryGate = {}) {
+  return useQuery({
+    queryKey: qk.libraryStats(),
+    queryFn: getLibraryStats,
+    enabled,
+  });
+}
+
+/** Presigned inline URL for an asset's original. Short-lived like the URL. */
+export function useAssetOriginalUrl(assetId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: qk.assetOriginal(assetId ?? ""),
+    queryFn: () => getAssetOriginalUrl(assetId as string),
+    enabled: enabled && !!assetId,
+    staleTime: 60_000,
+  });
+}
+
+/** Presigned URL for a thumbnail variant (used by the gallery cards). */
+export function useAssetThumbnailUrl(
+  assetId: string,
+  variant: "thumbnail" | "preview" | "fullsize",
+  enabled = true
+) {
+  return useQuery({
+    queryKey: qk.assetThumb(assetId, variant),
+    queryFn: () => getAssetThumbnailUrl(assetId, variant),
+    enabled: enabled && !!assetId,
+    staleTime: 60_000,
+  });
+}
+
+export function useSearch(query: string, enabled: boolean) {
+  return useQuery({
+    queryKey: qk.search(query),
+    queryFn: () => searchAssets(query),
+    enabled: enabled && query.trim().length > 0,
+    staleTime: 30_000,
+  });
+}
+
+export function useUpdateAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { assetId: string; update: AssetUpdate }) =>
+      updateAsset(vars.assetId, vars.update),
+    onSuccess: (detail) => {
+      qc.setQueryData(qk.asset(detail.asset_id), detail);
+      qc.invalidateQueries({ queryKey: qk.assets() });
+    },
+  });
+}
+
+export function useRerunAssetMl() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (assetId: string) => rerunAssetMl(assetId),
+    onSuccess: (detail) => {
+      qc.setQueryData(qk.asset(detail.asset_id), detail);
+      qc.invalidateQueries({ queryKey: qk.assets() });
+      qc.invalidateQueries({ queryKey: qk.libraryStats() });
+    },
+  });
+}
+
+export function useDeleteAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (assetId: string) => deleteAsset(assetId),
+    onSuccess: (_data, assetId) => {
+      qc.removeQueries({ queryKey: qk.asset(assetId) });
+      qc.invalidateQueries({ queryKey: qk.assets() });
+      qc.invalidateQueries({ queryKey: qk.libraryStats() });
     },
   });
 }

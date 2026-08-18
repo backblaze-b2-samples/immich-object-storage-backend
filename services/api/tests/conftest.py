@@ -80,6 +80,53 @@ def reset_shared_module_state():
     cached_get_s3_client.cache_clear()
 
 
+@pytest.fixture
+def fake_asset_store(monkeypatch):
+    """In-memory stand-in for repo.asset_store so ingest/asset/search logic can
+    be exercised end-to-end without touching B2. Yields the backing dict so
+    tests can inspect exactly which objects were written."""
+    import json as _json
+    from datetime import UTC, datetime
+
+    from app.repo import asset_store
+
+    store: dict[str, bytes] = {}
+
+    def put_bytes(key, data, content_type):
+        store[key] = bytes(data)
+
+    def put_json(key, obj):
+        store[key] = _json.dumps(obj, default=str).encode("utf-8")
+
+    def get_bytes(key):
+        return store.get(key)
+
+    def get_json(key):
+        raw = store.get(key)
+        return _json.loads(raw) if raw is not None else None
+
+    def list_prefix(prefix):
+        now = datetime.now(UTC)
+        return [
+            {"Key": k, "Size": len(v), "LastModified": now}
+            for k, v in store.items()
+            if k.startswith(prefix)
+        ]
+
+    def delete_keys(keys):
+        for k in keys:
+            store.pop(k, None)
+
+    monkeypatch.setattr(asset_store, "put_bytes", put_bytes)
+    monkeypatch.setattr(asset_store, "put_json", put_json)
+    monkeypatch.setattr(asset_store, "get_bytes", get_bytes)
+    monkeypatch.setattr(asset_store, "get_json", get_json)
+    monkeypatch.setattr(asset_store, "list_prefix", list_prefix)
+    monkeypatch.setattr(asset_store, "delete_keys", delete_keys)
+    monkeypatch.setattr(asset_store, "invalidate_listing", lambda: None)
+    return store
+
+
 @pytest.fixture(autouse=True)
 def isolate_download_counter(tmp_path, monkeypatch):
     """Redirect the persisted download counter to a temp file per test and

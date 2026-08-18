@@ -1,22 +1,25 @@
 <!-- last_verified: 2026-08-06 -->
 # Architecture
 
-## Components
+This sample is a self-hosted photo-library backend that stores originals and
+every derivative (thumbnails, CLIP embeddings, smart tags, EXIF sidecars) on
+Backblaze B2 — the object-storage pattern Immich uses with an external backend.
 
 - **apps/web/** — Next.js 16 frontend (App Router, Tailwind v4, shadcn/ui)
-  - Dashboard with stats, upload chart, recent uploads
-  - File upload with drag-and-drop, progress tracking
-  - File browser with preview, download, delete
+  - Dashboard: asset count, storage-by-prefix, write-amplification ratio, ML-status counts
+  - Library: scoped `library/` gallery + asset-detail (edit / re-run ML / delete)
+  - Semantic search: text → CLIP → cosine over B2 embeddings
+  - Upload: presigned direct-to-B2 photo ingest
+  - File browser: the retained full-bucket explorer across every prefix
   - Dark mode via `next-themes`
 - **services/api/** — FastAPI backend (layered architecture)
-  - REST API for file upload, listing, deletion
-  - B2 S3 integration via boto3
-  - File metadata extraction (images, PDFs)
-  - Health check endpoint with B2 connectivity verification
-  - Structured JSON logging with request tracing
-  - Prometheus-format metrics endpoint
+  - Photo ingest fan-out + asset lifecycle + semantic search
+  - B2 S3 integration via boto3 (whole-bucket + structured-prefix stores)
+  - **Optional on-device ML** — real OpenCLIP (`ViT-B-32`/`openai`), installed
+    separately from `requirements-ml.txt`, lazy-imported, degrades gracefully
+  - Health check, structured JSON logging, Prometheus-format metrics
 - **packages/shared/** — TypeScript type definitions
-  - Mirrors Pydantic models from the API
+  - Mirrors Pydantic models from the API (files + assets)
   - Consumed by `apps/web/` as workspace dependency
 
 ## Backend Layering
@@ -48,12 +51,18 @@ runtime/   FastAPI routes — calls service, never repo directly
 ```
 services/api/
   main.py                  App entrypoint, middleware, router registration
+  requirements.txt/.lock   Locked core deps (NO torch — stays green in verify)
+  requirements-ml.txt      Optional CLIP layer (torch, open-clip-torch, numpy)
   app/
-    types/                 Pydantic models (FileMetadata, UploadStats, etc.)
+    types/                 Pydantic models (files.py, assets.py, upload.py, stats.py)
     config/                Settings loaded from environment
-    repo/                  B2 S3 client (data access layer)
-    service/               Business logic (upload, files, metadata)
-    runtime/               FastAPI route handlers
+    repo/                  Data access — boto3 only here
+      b2_client.py         Whole-bucket client (list/head/delete/presign)
+      asset_store.py       Structured-prefix store (library/thumbs/ml/sidecar)
+      ml_clip.py           Lazy OpenCLIP adapter (device autodetect, MPS fallback)
+      embedding_index.py   Load embeddings from B2 + pure-Python cosine rank
+    service/               Business logic (upload, ingest, assets, search, files, metadata)
+    runtime/               FastAPI route handlers (upload, assets, search, files, health, metrics)
   tests/                   pytest tests (structural + integration)
 ```
 
@@ -92,10 +101,20 @@ External provisioning and deployment remain explicit user-approved actions.
 
 ## Data Stores
 
-- **Backblaze B2** — object storage (S3-compatible API)
-  - All uploaded files stored in a single bucket
-  - File listing and metadata via S3 `list_objects_v2` / `head_object`
-  - No application database — B2 is the sole data store
+- **Backblaze B2** — object storage (S3-compatible API), the sole data store
+  - No application database — the library is reconstructed by listing `sidecar/`
+  - Each asset owns objects under Immich-style structured prefixes:
+
+```
+library/<user>/<YYYY>/<MM>/<asset_id>.<ext>   original (user = "demo")
+thumbs/<asset_id>/thumbnail.webp|preview.webp|fullsize.webp
+ml/<asset_id>/clip.json                        {model, dim, vector:[...]}
+ml/<asset_id>/tags.json                        {model, tags:[{label,score}]}
+sidecar/<asset_id>.json                        per-asset source of truth
+```
+
+  - Write amplification is the headline: one photo becomes ~2–3× its bytes across
+    originals + thumbnails + ML + sidecars (the dashboard surfaces the ratio).
 
 ## External Services
 
@@ -111,10 +130,13 @@ See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 
 ## Data Flows
 
-- **Upload**: Browser -> `POST /upload/presign` (API validates the declared file + signs a PUT) -> Browser PUTs bytes **directly to B2** -> `POST /upload/verify` (API HEADs + Range-sniffs the stored object) -> response
-- **List**: Browser -> `GET /files` -> service calls repo -> returns file list
-- **Download**: Browser -> `GET /files/{key}/download` -> service validates key -> repo generates presigned URL -> browser downloads
-- **Delete**: Browser -> `DELETE /files/{key}` -> service validates key -> repo deletes from B2
+- **Ingest (create)**: Browser -> `POST /upload/presign` (mint a `library/` key + sign a PUT) -> Browser PUTs bytes **directly to B2** -> `POST /upload/verify` (HEAD + Range-sniff, then `ingest_asset()` fans out thumbnails + EXIF sidecar + optional CLIP embedding/tags to B2)
+- **Library (read)**: Browser -> `GET /assets` (list `sidecar/`) / `GET /assets/detail` / `GET /assets/original-url` / `GET /assets/thumbnail-url`
+- **Edit**: Browser -> `POST /assets/update` -> rewrite `sidecar/<id>.json`
+- **Re-run ML (run)**: Browser -> `POST /assets/rerun` -> re-run the ingest fan-out, preserving user edits
+- **Delete**: Browser -> `DELETE /assets` -> cascade delete original + all derivatives
+- **Search**: Browser -> `GET /search?q=` -> `ml_clip.embed_text` -> cosine rank over embeddings loaded from B2
+- **Full-bucket explorer**: Browser -> `GET /files` / `/files/{key}/…` (retained, browses every prefix)
 
 ## Observability
 
@@ -137,10 +159,11 @@ silently drift from FastAPI. `GET /metrics` is intentionally server-only.
 
 ## Canonical Files
 
-- Layered API handler: `services/api/app/runtime/upload.py`
-- Service orchestration: `services/api/app/service/upload.py`
-- B2 data access (repo layer): `services/api/app/repo/b2_client.py`
-- Pydantic models: `services/api/app/types/` (`files.py`, `upload.py`, `stats.py`, `formatting.py`)
+- Layered API handler: `services/api/app/runtime/upload.py`, `runtime/assets.py`
+- Service orchestration: `services/api/app/service/upload.py`, `service/ingest.py`, `service/assets.py`, `service/search.py`
+- B2 data access (repo layer): `services/api/app/repo/b2_client.py`, `repo/asset_store.py`
+- On-device ML adapter: `services/api/app/repo/ml_clip.py`, `repo/embedding_index.py`
+- Pydantic models: `services/api/app/types/` (`files.py`, `assets.py`, `upload.py`, `stats.py`, `formatting.py`)
 - Config (pydantic-settings): `services/api/app/config/settings.py`
 - Structural tests: `services/api/tests/test_structure.py`
 - OpenAPI contract: `docs/api/openapi.json`
@@ -148,12 +171,27 @@ silently drift from FastAPI. `GET /metrics` is intentionally server-only.
 - Frontend API client: `apps/web/src/lib/api-client.ts`
 - Shared TypeScript types: `packages/shared/src/types.ts`
 
+## Optional ML boundary
+
+The CLIP layer (`repo/ml_clip.py`, `repo/embedding_index.py`) is real OpenCLIP
+but **optional**: torch/open_clip are lazy-imported inside functions and live in
+`requirements-ml.txt`, kept out of the locked core so `pnpm verify` and
+`test_dependency_lock` stay green without a ~300 MB install. When the deps are
+absent (or inference fails), ingest still stores the original + thumbnails +
+EXIF sidecar and reports `ml_status ∈ {pending, unavailable, failed}`; search
+reports `unavailable`. This mirrors Immich's separate, optional ML container.
+Face recognition and video derivatives are documented, scoped-out extensions.
+
 ## Core Features
 
-- [File Upload](docs/features/file-upload.md)
+- [Photo Library](docs/features/photo-library.md)
+- [Semantic Search](docs/features/semantic-search.md)
+- [Smart Tags](docs/features/smart-tags.md)
+- [ML Pipeline](docs/features/ml-pipeline.md)
+- [Photo Ingest](docs/features/file-upload.md)
+- [Metadata / EXIF Sidecar](docs/features/metadata-extraction.md)
 - [File Browser](docs/features/file-browser.md)
 - [Dashboard](docs/features/dashboard.md)
-- [Metadata Extraction](docs/features/metadata-extraction.md)
 
 ## References
 

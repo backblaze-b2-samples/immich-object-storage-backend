@@ -29,7 +29,7 @@ import { interruptedUploadMessage, type UploadItem } from "@/lib/upload-status";
 
 const MAX_TOAST_FILE_NAME_LENGTH = 80;
 /** Names of uploads that were in flight, so a reload can own up to killing them. */
-const IN_FLIGHT_STORAGE_KEY = "vibe-coding-starter-kit:uploads-in-flight";
+const IN_FLIGHT_STORAGE_KEY = "immich-object-storage-backend:uploads-in-flight";
 
 function formatToastFileName(name: string) {
   if (name.length <= MAX_TOAST_FILE_NAME_LENGTH) return name;

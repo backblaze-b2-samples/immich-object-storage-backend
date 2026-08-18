@@ -1,11 +1,16 @@
 import type {
+  AssetDetail,
+  AssetSummary,
+  AssetUpdate,
   DailyUploadCount,
   FileMetadata,
   FileMetadataDetail,
   FileUploadResponse,
+  LibraryStats,
   PresignUploadResponse,
+  SearchResponse,
   UploadStats,
-} from "@vibe-coding-starter-kit/shared";
+} from "@immich-object-storage-backend/shared";
 
 // Single-origin deploys (Vercel `services`: one project serving web + API) put
 // the API under /api on the same origin, so no NEXT_PUBLIC_API_URL is needed —
@@ -41,6 +46,16 @@ export const API_CLIENT_ROUTES = {
   // payload ceiling no longer caps upload size.
   uploadPresign: { method: "post", path: "/upload/presign" },
   uploadVerify: { method: "post", path: "/upload/verify" },
+  // Photo library (Asset entity). All five lifecycle verbs plus semantic search.
+  assets: { method: "get", path: "/assets" },
+  assetStats: { method: "get", path: "/assets/stats" },
+  assetDetail: { method: "get", path: "/assets/detail" },
+  assetOriginalUrl: { method: "get", path: "/assets/original-url" },
+  assetThumbnailUrl: { method: "get", path: "/assets/thumbnail-url" },
+  assetUpdate: { method: "post", path: "/assets/update" },
+  assetRerun: { method: "post", path: "/assets/rerun" },
+  assetDelete: { method: "delete", path: "/assets" },
+  search: { method: "get", path: "/search" },
 } as const satisfies Record<string, ApiClientRoute>;
 
 /** Typed API error with HTTP status code for caller-side branching. */
@@ -300,11 +315,74 @@ export async function uploadFile(
 
   await putFileToStorage(presign, file, onProgress);
 
+  // Verify inspects the stored object AND runs the ingest fan-out (thumbnails,
+  // EXIF sidecar, optional CLIP). The minted key is opaque, so the user's real
+  // filename rides along to be preserved in the sidecar.
   return apiFetch<FileUploadResponse>(API_CLIENT_ROUTES.uploadVerify.path, {
     method: API_CLIENT_ROUTES.uploadVerify.method.toUpperCase(),
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ key: presign.key }),
+    body: JSON.stringify({ key: presign.key, original_filename: file.name }),
   });
+}
+
+// --- Photo library (Asset) --------------------------------------------------
+
+export async function getAssets() {
+  return apiFetch<AssetSummary[]>(API_CLIENT_ROUTES.assets.path);
+}
+
+export async function getLibraryStats() {
+  return apiFetch<LibraryStats>(API_CLIENT_ROUTES.assetStats.path);
+}
+
+export async function getAsset(assetId: string) {
+  return apiFetch<AssetDetail>(
+    `${API_CLIENT_ROUTES.assetDetail.path}?asset_id=${encodeURIComponent(assetId)}`
+  );
+}
+
+export async function getAssetOriginalUrl(assetId: string) {
+  return apiFetch<{ url: string }>(
+    `${API_CLIENT_ROUTES.assetOriginalUrl.path}?asset_id=${encodeURIComponent(assetId)}`
+  );
+}
+
+export async function getAssetThumbnailUrl(
+  assetId: string,
+  variant: "thumbnail" | "preview" | "fullsize" = "preview"
+) {
+  return apiFetch<{ url: string }>(
+    `${API_CLIENT_ROUTES.assetThumbnailUrl.path}?asset_id=${encodeURIComponent(assetId)}&variant=${variant}`
+  );
+}
+
+export async function updateAsset(assetId: string, update: AssetUpdate) {
+  return apiFetch<AssetDetail>(API_CLIENT_ROUTES.assetUpdate.path, {
+    method: API_CLIENT_ROUTES.assetUpdate.method.toUpperCase(),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ asset_id: assetId, ...update }),
+  });
+}
+
+export async function rerunAssetMl(assetId: string) {
+  return apiFetch<AssetDetail>(API_CLIENT_ROUTES.assetRerun.path, {
+    method: API_CLIENT_ROUTES.assetRerun.method.toUpperCase(),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ asset_id: assetId }),
+  });
+}
+
+export async function deleteAsset(assetId: string) {
+  return apiFetch<{ asset_id: string; deleted: boolean }>(
+    `${API_CLIENT_ROUTES.assetDelete.path}?asset_id=${encodeURIComponent(assetId)}`,
+    { method: API_CLIENT_ROUTES.assetDelete.method.toUpperCase() }
+  );
+}
+
+export async function searchAssets(query: string, limit = 24) {
+  return apiFetch<SearchResponse>(
+    `${API_CLIENT_ROUTES.search.path}?q=${encodeURIComponent(query)}&limit=${limit}`
+  );
 }
 
 /**

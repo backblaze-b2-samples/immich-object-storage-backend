@@ -1,6 +1,341 @@
 {
   "components": {
     "schemas": {
+      "AssetActionResponse": {
+        "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "deleted": {
+            "default": false,
+            "title": "Deleted",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "asset_id"
+        ],
+        "title": "AssetActionResponse",
+        "type": "object"
+      },
+      "AssetDetail": {
+        "description": "Full asset view for the detail panel.",
+        "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "derivative_keys": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Derivative Keys",
+            "type": "object"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "embedding_dim": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedding Dim"
+          },
+          "embedding_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedding Model"
+          },
+          "exif": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exif"
+          },
+          "favorite": {
+            "default": false,
+            "title": "Favorite",
+            "type": "boolean"
+          },
+          "image_height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Height"
+          },
+          "image_width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Width"
+          },
+          "is_image": {
+            "default": true,
+            "title": "Is Image",
+            "type": "boolean"
+          },
+          "ml_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Message"
+          },
+          "ml_status": {
+            "default": "pending",
+            "enum": [
+              "done",
+              "pending",
+              "failed",
+              "unavailable"
+            ],
+            "title": "Ml Status",
+            "type": "string"
+          },
+          "original_filename": {
+            "title": "Original Filename",
+            "type": "string"
+          },
+          "original_key": {
+            "title": "Original Key",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "size_human": {
+            "title": "Size Human",
+            "type": "string"
+          },
+          "smart_tags": {
+            "items": {
+              "$ref": "#/components/schemas/SmartTag"
+            },
+            "title": "Smart Tags",
+            "type": "array"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "thumbnail_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Key"
+          },
+          "uploaded_at": {
+            "format": "date-time",
+            "title": "Uploaded At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "original_filename",
+          "content_type",
+          "size_bytes",
+          "size_human",
+          "uploaded_at",
+          "original_key"
+        ],
+        "title": "AssetDetail",
+        "type": "object"
+      },
+      "AssetIdRequest": {
+        "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id"
+        ],
+        "title": "AssetIdRequest",
+        "type": "object"
+      },
+      "AssetSummary": {
+        "description": "Gallery-card view of one photo.",
+        "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "favorite": {
+            "default": false,
+            "title": "Favorite",
+            "type": "boolean"
+          },
+          "is_image": {
+            "default": true,
+            "title": "Is Image",
+            "type": "boolean"
+          },
+          "ml_status": {
+            "default": "pending",
+            "enum": [
+              "done",
+              "pending",
+              "failed",
+              "unavailable"
+            ],
+            "title": "Ml Status",
+            "type": "string"
+          },
+          "original_filename": {
+            "title": "Original Filename",
+            "type": "string"
+          },
+          "original_key": {
+            "title": "Original Key",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "size_human": {
+            "title": "Size Human",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "thumbnail_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Key"
+          },
+          "uploaded_at": {
+            "format": "date-time",
+            "title": "Uploaded At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "original_filename",
+          "content_type",
+          "size_bytes",
+          "size_human",
+          "uploaded_at",
+          "original_key"
+        ],
+        "title": "AssetSummary",
+        "type": "object"
+      },
+      "AssetUpdateRequest": {
+        "description": "Edit request body: which asset, plus the fields to change.",
+        "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "favorite": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Favorite"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          }
+        },
+        "required": [
+          "asset_id"
+        ],
+        "title": "AssetUpdateRequest",
+        "type": "object"
+      },
       "DailyUploadCount": {
         "properties": {
           "date": {
@@ -307,6 +642,76 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "LibraryStats": {
+        "description": "Dashboard metrics for the photo library.",
+        "properties": {
+          "derivative_bytes": {
+            "title": "Derivative Bytes",
+            "type": "integer"
+          },
+          "derivative_human": {
+            "title": "Derivative Human",
+            "type": "string"
+          },
+          "favorites": {
+            "title": "Favorites",
+            "type": "integer"
+          },
+          "ml_status_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Ml Status Counts",
+            "type": "object"
+          },
+          "original_bytes": {
+            "title": "Original Bytes",
+            "type": "integer"
+          },
+          "original_human": {
+            "title": "Original Human",
+            "type": "string"
+          },
+          "storage_by_prefix": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Storage By Prefix",
+            "type": "object"
+          },
+          "total_assets": {
+            "title": "Total Assets",
+            "type": "integer"
+          },
+          "total_bytes": {
+            "title": "Total Bytes",
+            "type": "integer"
+          },
+          "total_human": {
+            "title": "Total Human",
+            "type": "string"
+          },
+          "write_amplification": {
+            "title": "Write Amplification",
+            "type": "number"
+          }
+        },
+        "required": [
+          "total_assets",
+          "original_bytes",
+          "derivative_bytes",
+          "total_bytes",
+          "original_human",
+          "derivative_human",
+          "total_human",
+          "write_amplification",
+          "storage_by_prefix",
+          "ml_status_counts",
+          "favorites"
+        ],
+        "title": "LibraryStats",
+        "type": "object"
+      },
       "PresignUploadRequest": {
         "description": "What the browser declares before uploading directly to B2.",
         "properties": {
@@ -332,8 +737,12 @@
         "type": "object"
       },
       "PresignUploadResponse": {
-        "description": "A short-lived presigned PUT the browser uploads to, plus the exact\nheaders it must send. `Content-Length` and `content-type` are signed into\nthe URL, so B2 rejects a body of any other size or type.",
+        "description": "A short-lived presigned PUT the browser uploads to, plus the exact\nheaders it must send. `Content-Length` and `content-type` are signed into\nthe URL, so B2 rejects a body of any other size or type.\n\n`key` is a minted `library/<user>/<YYYY>/<MM>/<asset_id>.<ext>` path;\n`asset_id` is the stable id every derivative and the sidecar share.",
         "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
           "content_type": {
             "title": "Content Type",
             "type": "string"
@@ -364,6 +773,7 @@
         },
         "required": [
           "key",
+          "asset_id",
           "url",
           "method",
           "content_type",
@@ -371,6 +781,81 @@
           "expires_in"
         ],
         "title": "PresignUploadResponse",
+        "type": "object"
+      },
+      "SearchMatch": {
+        "properties": {
+          "asset": {
+            "$ref": "#/components/schemas/AssetSummary"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "asset",
+          "score"
+        ],
+        "title": "SearchMatch",
+        "type": "object"
+      },
+      "SearchResponse": {
+        "properties": {
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "ml_status": {
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Ml Status",
+            "type": "string"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SearchMatch"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "query",
+          "ml_status"
+        ],
+        "title": "SearchResponse",
+        "type": "object"
+      },
+      "SmartTag": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "label",
+          "score"
+        ],
+        "title": "SmartTag",
         "type": "object"
       },
       "UploadStats": {
@@ -447,11 +932,22 @@
         "type": "object"
       },
       "VerifyUploadRequest": {
-        "description": "Sent after the direct PUT so the API can inspect the stored object.",
+        "description": "Sent after the direct PUT so the API can inspect the stored object.\n\n`original_filename` is the name the user picked (the minted key is opaque),\npreserved in the sidecar for display.",
         "properties": {
           "key": {
             "title": "Key",
             "type": "string"
+          },
+          "original_filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Filename"
           }
         },
         "required": [
@@ -463,12 +959,312 @@
     }
   },
   "info": {
-    "description": "Local API for the Vibe Coding Starter Kit template, providing file upload and management backed by Backblaze B2. This contract documents the template's local API, not a hosted public endpoint.",
-    "title": "Vibe Coding Starter Kit API",
+    "description": "Local API for the Immich B2 Backend sample, a self-hosted photo library whose originals, thumbnails, CLIP embeddings, smart tags, and EXIF sidecars all live on Backblaze B2. This contract documents the sample's local API, not a hosted public endpoint.",
+    "title": "Immich B2 Backend API",
     "version": "0.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
+    "/assets": {
+      "delete": {
+        "operationId": "asset_delete_endpoint_assets_delete",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "asset_id",
+            "required": true,
+            "schema": {
+              "title": "Asset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Asset Delete Endpoint",
+        "tags": [
+          "assets"
+        ]
+      },
+      "get": {
+        "operationId": "list_assets_endpoint_assets_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AssetSummary"
+                  },
+                  "title": "Response List Assets Endpoint Assets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Assets Endpoint",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/assets/detail": {
+      "get": {
+        "operationId": "asset_detail_endpoint_assets_detail_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "asset_id",
+            "required": true,
+            "schema": {
+              "title": "Asset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Asset Detail Endpoint",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/assets/original-url": {
+      "get": {
+        "operationId": "asset_original_url_endpoint_assets_original_url_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "asset_id",
+            "required": true,
+            "schema": {
+              "title": "Asset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Asset Original Url Endpoint",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/assets/rerun": {
+      "post": {
+        "operationId": "asset_rerun_endpoint_assets_rerun_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetIdRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Asset Rerun Endpoint",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/assets/stats": {
+      "get": {
+        "operationId": "library_stats_endpoint_assets_stats_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryStats"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Library Stats Endpoint",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/assets/thumbnail-url": {
+      "get": {
+        "operationId": "asset_thumbnail_url_endpoint_assets_thumbnail_url_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "asset_id",
+            "required": true,
+            "schema": {
+              "title": "Asset Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "variant",
+            "required": false,
+            "schema": {
+              "default": "preview",
+              "title": "Variant",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Asset Thumbnail Url Endpoint",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/assets/update": {
+      "post": {
+        "operationId": "asset_update_endpoint_assets_update_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Asset Update Endpoint",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
     "/files": {
       "get": {
         "operationId": "list_files_endpoint_files_get",
@@ -999,6 +1795,59 @@
         ]
       }
     },
+    "/search": {
+      "get": {
+        "description": "CLIP semantic search over embeddings stored in B2.\n\nSync `def` so the blocking B2 embedding load + CPU text-encode run in\nStarlette's threadpool, not on the event loop.",
+        "operationId": "search_endpoint_search_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 24,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search Endpoint",
+        "tags": [
+          "search"
+        ]
+      }
+    },
     "/upload/presign": {
       "post": {
         "description": "Validate a declared upload and hand back a presigned PUT.\n\nThe browser uploads the bytes straight to B2 with the returned URL, so they\nnever traverse this Function \u2014 that is what lifts Vercel's ~4.5 MB payload\nceiling. Size and content-type are signed into the URL (see the service).",
@@ -1043,7 +1892,7 @@
     },
     "/upload/verify": {
       "post": {
-        "description": "Confirm an object just uploaded directly to B2 is valid and visible.",
+        "description": "Confirm an object just uploaded directly to B2 is valid, then ingest it.\n\nVerification (HEAD + signature sniff) and the ingest fan-out (thumbnails,\nEXIF sidecar, optional CLIP) are blocking, so they run in the threadpool.",
         "operationId": "verify_upload_route_upload_verify_post",
         "requestBody": {
           "content": {

@@ -2,11 +2,21 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    b2_endpoint: str = "https://s3.us-west-004.backblazeb2.com"
-    b2_key_id: str = ""
+    # Standardized B2_* env names. The regional S3 endpoint is DERIVED from
+    # b2_region in repo/b2_client.py (no hardcoded region here), so a fork only
+    # ever sets its bucket's region — never an endpoint URL.
+    b2_application_key_id: str = ""
     b2_application_key: str = ""
     b2_bucket_name: str = ""
-    b2_public_url: str = ""
+    b2_region: str = ""
+    # Optional: only used to build public object URLs for a public bucket. The
+    # app serves everything via presigned URLs and runs fine without it.
+    b2_public_url_base: str = ""
+
+    # Optional override for the on-device CLIP layer. Empty = autodetect
+    # (CUDA -> Apple MPS -> CPU, defaulting to CPU). Set to "cpu", "cuda", or
+    # "mps" to force one. See services/api/app/repo/ml_clip.py.
+    ml_device: str = ""
 
     api_port: int = 8000
     # Interactive API docs (/docs, /redoc, /openapi.json). On by default for
